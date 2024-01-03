@@ -1,6 +1,6 @@
 # Release history
 
-## Version 0.9.1 [unpublished]
+## Version 0.9.4 [unpublished]
 
 ### Changes
 
@@ -9,6 +9,40 @@
 ### Bugfixes
 
 -
+
+## Version 0.9.3
+
+### Changes
+
+-
+
+### Bugfixes
+
+- Fix install bug that precluded installation of 0.9.2
+
+## Version 0.9.2
+
+### Changes
+
+- Update ipynb file showing example of color_pH modelsystem. (Very minor)
+
+### Bugfixes
+
+- Fixed a bug in `expected_minimum` where SumEquals constraint values were not rescaled
+  correctly during normalization.
+
+## Version 0.9.1
+
+### Changes
+
+- Added colorpH as ModelSystem
+- Exposed Integer, Real, Categorical and ModelSystem as direct imports of ProcessOptimizer.
+
+### Bugfixes
+
+- Changed the result object to store information about constraints (when present).
+- Updated `expected_minimum` to make sure that the returned result location respects
+  SumEquals constraints if these were used during the optimization.
 
 ## Version 0.9.0
 
