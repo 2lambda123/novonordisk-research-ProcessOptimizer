@@ -2,16 +2,42 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+from os import path
 
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(name='ProcessOptimizer',
-      version='0.4.8',
-      description='Sequential model-based optimization toolbox (forked from scikit-optimize)',
-      url='https://github.com/bytesandbrains/ProcessOptimizer',
+      version='0.9.0',
+      description='Sequential model-based optimization toolbox \
+    (forked from scikit-optimize)',
+      url='https://github.com/novonordisk-research/ProcessOptimizer',
       license='BSD',
-      author='Bytes and Brains',
-      packages=['ProcessOptimizer', 'ProcessOptimizer.learning', 'ProcessOptimizer.optimizer', 'ProcessOptimizer.space',
-                'ProcessOptimizer.learning.gaussian_process'],
-      install_requires=['pyaml', 'numpy', 'matplotlib', 'scipy>=0.14.0',
-                        'scikit-learn==0.21.0', 'bokeh==1.4.0', 'tornado==5.1.1', 'six']
+      author='Novo Nordisk, Research & Early Development',
+      packages=[
+          'ProcessOptimizer',
+          'ProcessOptimizer.learning',
+          'ProcessOptimizer.model_systems',
+          'ProcessOptimizer.optimizer',
+          'ProcessOptimizer.space',
+          'ProcessOptimizer.utils',
+          'ProcessOptimizer.learning.gaussian_process'
+          ],
+      install_requires=['numpy', 'matplotlib', 'scipy', 'bokeh',
+                        'scikit-learn>=0.24.2', 'six', 'deap', 'pyYAML'],
+      extras_require={
+          "browniebee": ['numpy==1.23.3',
+                         'matplotlib==3.5.3',
+                         'scipy==1.9.1',
+                         'scikit-learn==1.1.2',
+                         'six==1.16.0',
+                         'deap==1.3.3',
+                         'pyYAML==6.0',
+                         'bokeh==2.4.3',
+                         'tornado==6.2',
+                         ]
+          },
+      long_description=long_description,
+      long_description_content_type='text/markdown'
       )

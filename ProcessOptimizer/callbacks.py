@@ -13,12 +13,17 @@ Early stopping callbacks
 ------------------------
 * DeltaXStopper
 """
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
+
 from time import time
 
 import numpy as np
 
 from ProcessOptimizer.utils import dump
+
 
 def check_callback(callback):
     """
@@ -261,15 +266,16 @@ class CheckpointSaver(object):
 
 
     Example usage:
-        import ProcessOptimizer
+        import ProcessOptimizer as PO
 
-        checkpoint_callback = ProcessOptimizer.callbacks.CheckpointSaver("./result.pkl")
-        ProcessOptimizer.gp_minimize(obj_fun, dims, callback=[checkpoint_callback])
+        checkpoint_callbacks = PO.callbacks.CheckpointSaver("./result.pkl")
+        PO.gp_minimize(obj_fun, dims, callback=[checkpoint_callbacks])
 
     Parameters
     ----------
     * `checkpoint_path`: location where checkpoint will be saved to;
-    * `dump_options`: options to pass on to `ProcessOptimizer.dump`, like `compress=9`
+    * `dump_options`: options to pass on to `ProcessOptimizer.dump`,
+    like `compress=9`
     """
     def __init__(self, checkpoint_path, **dump_options):
         self.checkpoint_path = checkpoint_path

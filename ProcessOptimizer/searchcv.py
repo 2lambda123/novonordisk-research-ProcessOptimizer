@@ -1,7 +1,11 @@
-from collections import defaultdict, Sized
-from functools import partial
+import warnings
 
-import logging
+try:
+    from collections.abc import Sized
+except ImportError:
+    from collections import Sized
+from collections import defaultdict
+from functools import partial
 
 import numpy as np
 from scipy.stats import rankdata
@@ -10,9 +14,12 @@ import sklearn
 from sklearn.base import is_classifier, clone
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
-from sklearn.metrics.scorer import check_scoring
+
+try:
+    from sklearn.metrics import check_scoring
+except ImportError:
+    from sklearn.metrics.scorer import check_scoring
 
 from joblib import Parallel, delayed
 
@@ -38,7 +45,8 @@ class BayesSearchCV(BaseSearchCV):
     distributions. The number of parameter settings that are tried is
     given by n_iter.
 
-    Parameters are presented as a list of ProcessOptimizer.space.Dimension objects.
+    Parameters are presented as a list of ProcessOptimizer.space.Dimension
+    objects.
 
     Parameters
     ----------
@@ -52,10 +60,10 @@ class BayesSearchCV(BaseSearchCV):
         (dict, int).
         One of these cases:
         1. dictionary, where keys are parameter names (strings)
-        and values are ProcessOptimizer.space.Dimension instances (Real, Integer
-        or Categorical) or any other valid value that defines ProcessOptimizer
-        dimension (see ProcessOptimizer.Optimizer docs). Represents search space
-        over parameters of the provided estimator.
+        and values are ProcessOptimizer.space.Dimension instances (Real,
+        Integer or Categorical) or any other valid value that defines
+        ProcessOptimizer dimension (see ProcessOptimizer.Optimizer docs).
+        Represents search space over parameters of the provided estimator.
         2. list of dictionaries: a list of dictionaries, where every
         dictionary fits the description given in case 1 above.
         If a list of dictionary objects is given, then the search is
@@ -112,11 +120,6 @@ class BayesSearchCV(BaseSearchCV):
 
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
-
-    iid : boolean, default=True
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -282,9 +285,9 @@ class BayesSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, search_spaces, optimizer_kwargs=None,
                  n_iter=50, scoring=None, fit_params=None, n_jobs=1,
-                 n_points=1, iid=True, refit=True, cv=None, verbose=0,
+                 n_points=1, iid='deprecated', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=False, logger=None):
+                 error_score='raise', return_train_score=False):
 
         self.search_spaces = search_spaces
         self.n_iter = n_iter
@@ -298,14 +301,14 @@ class BayesSearchCV(BaseSearchCV):
         # in the constructor and be passed in ``fit``.
         self.fit_params = fit_params
 
-        if logger:
-            self.printfn = logger.info
-        else:
-            self.printfn = print
+        if iid != "deprecated":
+            warnings.warn("The `iid` parameter has been deprecated "
+                          "and will be ignored.")
+        self.iid = iid  # For sklearn repr pprint
 
         super(BayesSearchCV, self).__init__(
             estimator=estimator, scoring=scoring,
-            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
@@ -392,9 +395,12 @@ class BayesSearchCV(BaseSearchCV):
         n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
-            self.printfn("Fitting {0} folds for each of {1} candidates, totalling"
-                         " {2} fits".format(n_splits, n_candidates,
-                                            n_candidates * n_splits))
+            print(
+                "Fitting {0} folds for each of {1} candidates, totalling"
+                " {2} fits".format(
+                    n_splits, n_candidates, n_candidates * n_splits
+                    )
+                    )
 
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
@@ -418,18 +424,20 @@ class BayesSearchCV(BaseSearchCV):
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+            (_fit_fail, train_scores, test_scores, test_sample_counts,
+             fit_time, score_time, parameters) = zip(*[dic.values()
+                                                       for dic in out])
         else:
-            (test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+            (_fit_fail, test_scores, test_sample_counts,
+             fit_time, score_time, parameters) = zip(*[dic.values()
+                                                       for dic in out])
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
 
         results = dict()
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
+        def _store(key_name, array, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             array = np.array(array, dtype=np.float64).reshape(n_candidates,
                                                               n_splits)
@@ -438,25 +446,19 @@ class BayesSearchCV(BaseSearchCV):
                     results["split%d_%s"
                             % (split_i, key_name)] = array[:, split_i]
 
-            array_means = np.average(array, axis=1, weights=weights)
+            array_means = np.average(array, axis=1)
             results['mean_%s' % key_name] = array_means
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(np.average((array -
                                              array_means[:, np.newaxis]) ** 2,
-                                            axis=1, weights=weights))
+                                            axis=1))
             results['std_%s' % key_name] = array_stds
 
             if rank:
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        # Computed the (weighted) mean and std for test scores alone
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
-
-        _store('test_score', test_scores, splits=True, rank=True,
-               weights=test_sample_counts if self.iid else None)
+        _store('test_score', test_scores, splits=True, rank=True)
         if self.return_train_score:
             _store('train_score', train_scores, splits=True)
         _store('fit_time', fit_time)
@@ -469,7 +471,7 @@ class BayesSearchCV(BaseSearchCV):
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
         param_results = defaultdict(partial(
-            MaskedArray,
+            np.ma.array,
             np.empty(n_candidates,),
             mask=True,
             dtype=object))
@@ -530,8 +532,8 @@ class BayesSearchCV(BaseSearchCV):
         ----------
         params_space : dict
             Represents parameter search space. The keys are parameter
-            names (strings) and values are ProcessOptimizer.space.Dimension instances,
-            one of Real, Integer or Categorical.
+            names (strings) and values are ProcessOptimizer.space.Dimension
+            instances, one of Real, Integer or Categorical.
 
         Returns
         -------
@@ -554,7 +556,10 @@ class BayesSearchCV(BaseSearchCV):
         params = optimizer.ask(n_points=n_points)
 
         # convert parameters to python native types
-        params = [[np.asscalar(np.array(v)) for v in p] for p in params]
+        if n_points == 1:
+            params = [[np.array(v).item() for v in params]]
+        else:
+            params = [[np.array(v).item() for v in p] for p in params]
 
         # make lists into dictionaries
         params_dict = [point_asdict(search_space, p) for p in params]

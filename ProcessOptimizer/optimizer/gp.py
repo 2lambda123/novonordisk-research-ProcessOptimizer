@@ -5,16 +5,30 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from .base import base_minimize
-from ..utils import cook_estimator
-from ..utils import normalize_dimensions
+from ..learning import cook_estimator
+from ..space import normalize_dimensions
 
 
-def gp_minimize(func, dimensions, base_estimator=None,
-                n_calls=100, n_random_starts=10,
-                acq_func="gp_hedge", acq_optimizer="auto", x0=None, y0=None,
-                random_state=None, verbose=False, callback=None,
-                n_points=10000, n_restarts_optimizer=5, xi=0.01, kappa=1.96,
-                noise="gaussian", n_jobs=1):
+def gp_minimize(
+    func,
+    dimensions,
+    base_estimator=None,
+    n_calls=100,
+    n_random_starts=10,
+    acq_func="EI",
+    acq_optimizer="auto",
+    x0=None,
+    y0=None,
+    random_state=None,
+    verbose=False,
+    callback=None,
+    n_points=10000,
+    n_restarts_optimizer=5,
+    xi=0.01,
+    kappa=1.96,
+    noise="gaussian",
+    n_jobs=1,
+):
     """Bayesian optimization using Gaussian Processes.
 
     If every function evaluation is expensive, for instance
@@ -44,7 +58,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
     * `func` [callable]:
         Function to minimize. Should take a single list of parameters
         and return the objective value.
-    
+
         If you have a search-space where all dimensions have names,
         then you can use `ProcessOptimizer.utils.use_named_args` as a decorator
         on your objective function, in order to call it directly
@@ -81,7 +95,7 @@ def gp_minimize(func, dimensions, base_estimator=None,
         Number of evaluations of `func` with random points before
         approximating it with `base_estimator`.
 
-    * `acq_func` [string, default=`"gp_hedge"`]:
+    * `acq_func` [string, default=`"EI"`]:
         Function to minimize over the gaussian prior. Can be either
 
         - `"LCB"` for lower confidence bound.
@@ -89,15 +103,15 @@ def gp_minimize(func, dimensions, base_estimator=None,
         - `"PI"` for negative probability of improvement.
         - `"gp_hedge"` Probabilistically choose one of the above three
           acquisition functions at every iteration. The weightage
-          given to these gains can be set by `\eta` through `acq_func_kwargs`.
+          given to these gains can be set by `eta` through `acq_func_kwargs`.
             - The gains `g_i` are initialized to zero.
             - At every iteration,
                 - Each acquisition function is optimised independently to
                   propose an candidate point `X_i`.
                 - Out of all these candidate points, the next point `X_best` is
-                  chosen by `softmax(\eta g_i)`
+                  chosen by `softmax(eta g_i)`
                 - After fitting the surrogate model with `(X_best, y_best)`,
-                  the gains are updated such that `g_i -= \mu(X_i)`
+                  the gains are updated such that `g_i -= mu(X_i)`
         - `"EIps"` for negated expected improvement per second to take into
           account the function compute time. Then, the objective function is
           assumed to return two values, the first being the objective value and
@@ -215,14 +229,28 @@ def gp_minimize(func, dimensions, base_estimator=None,
 
     if base_estimator is None:
         base_estimator = cook_estimator(
-            "GP", space=space, random_state=rng.randint(0, np.iinfo(np.int32).max),
-            noise=noise)
+            "GP",
+            space=space,
+            random_state=rng.randint(0, np.iinfo(np.int32).max),
+            noise=noise,
+        )
 
     return base_minimize(
-        func, space, base_estimator=base_estimator,
+        func,
+        space,
+        base_estimator=base_estimator,
         acq_func=acq_func,
-        xi=xi, kappa=kappa, acq_optimizer=acq_optimizer, n_calls=n_calls,
-        n_points=n_points, n_random_starts=n_random_starts,
+        xi=xi,
+        kappa=kappa,
+        acq_optimizer=acq_optimizer,
+        n_calls=n_calls,
+        n_points=n_points,
+        n_random_starts=n_random_starts,
         n_restarts_optimizer=n_restarts_optimizer,
-        x0=x0, y0=y0, random_state=rng, verbose=verbose,
-        callback=callback, n_jobs=n_jobs)
+        x0=x0,
+        y0=y0,
+        random_state=rng,
+        verbose=verbose,
+        callback=callback,
+        n_jobs=n_jobs,
+    )

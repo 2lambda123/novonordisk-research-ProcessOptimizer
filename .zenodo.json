@@ -1,0 +1,52 @@
+{
+    "description": "A Research Tool for iterative process optimization using Bayesian optimization", 
+    "license": "bsd-3-clause", 
+    "title": "ProcessOptimizer", 
+    "upload_type": "software",
+    "keywords": [ "Process", "Optimization", "Python" ],
+    "language": "eng",
+    "creators": [
+        {
+            "affiliation": "Novo Nordisk", 
+            "name": "Aksel Obdrup"
+        },
+        {
+            "affiliation": "Novo Nordisk", 
+            "name": "Bjarne Enrico Nielsen",
+            "orcid": "0000-0001-9806-4253"
+        },
+        {
+            "affiliation": "Novo Nordisk", 
+            "name": "Rolf Hejle Taaning"
+        },
+        {
+            "affiliation": "Bytes and Brains", 
+            "name": "Sigurd Carlsen"
+        },
+        {
+            "affiliation": "Novo Nordisk", 
+            "name": "Søren Bertelsen",
+            "orcid": "0000-0003-2401-3650"
+        },
+        {
+            "affiliation": "Danish Technological Institute", 
+            "name": "Morten Bormann Nielsen",
+            "orcid": "0000-0001-5055-9097"
+        },
+        {
+            "affiliation": "Danish Technological Institute", 
+            "name": "Anders Bank Blichfeld",
+            "orcid": "0000-0001-5631-4197"
+        },
+        {
+            "affiliation": "Danish Technological Institute", 
+            "name": "Christian Bladt Brandt"
+        },
+        {
+            "affiliation": "Novo Nordisk",
+            "name": "Søren Furbo",
+            "orcid": "0000-0002-2044-7438"
+        }
+    ], 
+    "access_right": "open"
+}
