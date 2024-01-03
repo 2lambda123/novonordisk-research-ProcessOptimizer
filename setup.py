@@ -35,7 +35,7 @@ setup(name='ProcessOptimizer',
                          'deap==1.3.3',
                          'pyYAML==6.0',
                          'bokeh==2.4.3',
-                         'tornado==6.2',
+                         'tornado==6.3.3',
                          ]
           },
       long_description=long_description,
