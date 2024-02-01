@@ -47,7 +47,7 @@ setup(
             "scikit-learn==1.3.2",
             "scipy==1.11.4",
             "six==1.16.0",
-            "tornado==6.3.3",
+            "tornado==6.4",
         ]
     },
     long_description=long_description,
