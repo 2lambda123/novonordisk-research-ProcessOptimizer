@@ -45,7 +45,7 @@ setup(
             "numpy==1.26.3",
             "pyYAML==6.0.1",
             "scikit-learn==1.3.2",
-            "scipy==1.11.4",
+            "scipy==1.12.0",
             "six==1.16.0",
             "tornado==6.3.3",
         ]
